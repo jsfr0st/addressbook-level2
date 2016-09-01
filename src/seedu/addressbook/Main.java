@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-
+import java.io.FileNotFoundException;
 /**
  * Entry point of the Address Book application.
  * Initializes the application and starts the interaction with the user.
@@ -107,6 +107,7 @@ public class Main {
         try {
             command.setData(addressBook, lastShownList);
             CommandResult result = command.execute();
+            isFileExist();
             storage.save(addressBook);
             return result;
         } catch (Exception e) {
@@ -114,7 +115,13 @@ public class Main {
             throw new RuntimeException(e);
         }
     }
-
+    
+    private void isFileExist() throws FileNotFoundException {
+    	if(!storage.haveFile()){
+    		throw new FileNotFoundException("No storage file at " + storage.getPath());
+    	}
+    }
+    
     /**
      * Creates the StorageFile object based on the user specified path (if any) or the default storage path.
      * @param launchArgs arguments supplied by the user at program launch
