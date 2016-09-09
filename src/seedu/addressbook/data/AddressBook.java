@@ -5,11 +5,14 @@ import seedu.addressbook.data.person.UniquePersonList.*;
 import seedu.addressbook.data.tag.UniqueTagList;
 import seedu.addressbook.data.tag.UniqueTagList.*;
 import seedu.addressbook.data.tag.Tag;
+import seedu.addressbook.data.tag.Tagging;
+import seedu.addressbook.data.tag.Tagging.Action;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * Represents the entire address book. Contains the data of the address book.
@@ -22,13 +25,15 @@ public class AddressBook {
 
     private final UniquePersonList allPersons;
     private final UniqueTagList allTags; // can contain tags not attached to any person
-
+    private final ArrayList<Tagging> taggings;
+    
     /**
      * Creates an empty address book.
      */
     public AddressBook() {
         allPersons = new UniquePersonList();
         allTags = new UniqueTagList();
+        taggings = new ArrayList<Tagging>();
     }
 
     /**
@@ -39,8 +44,21 @@ public class AddressBook {
      * @param tags external changes to this will not affect this address book
      */
     public AddressBook(UniquePersonList persons, UniqueTagList tags) {
+        this(persons, tags, addExistingTags(persons));
+    }
+    
+    /**
+     * Constructs an address book with the given data.
+     * Also updates the tag list with any missing tags found in any person.
+     *
+     * @param persons external changes to this will not affect this address book
+     * @param tags external changes to this will not affect this address book
+     * @param tagging external changes to this will not affect this address book
+     */
+    public AddressBook(UniquePersonList persons, UniqueTagList tags, ArrayList<Tagging> taggings) {
         this.allPersons = new UniquePersonList(persons);
         this.allTags = new UniqueTagList(tags);
+        this.taggings = taggings;
         for (Person p : allPersons) {
             syncTagsWithMasterList(p);
         }
@@ -79,6 +97,10 @@ public class AddressBook {
     public void addPerson(Person toAdd) throws DuplicatePersonException {
         syncTagsWithMasterList(toAdd);
         allPersons.add(toAdd);
+        UniqueTagList tags = toAdd.getTags();
+        for(Tag t : tags) {
+            this.taggings.add(new Tagging(Action.ADD, toAdd, t));
+        }
     }
 
     /**
@@ -111,6 +133,15 @@ public class AddressBook {
      */
     public void removePerson(ReadOnlyPerson toRemove) throws PersonNotFoundException {
         allPersons.remove(toRemove);
+        UniqueTagList tags = toRemove.getTags();
+        for(Tag t : tags){
+            for(Tagging tg : taggings){
+                if(tg.getTag().toString().equals(toRemove.toString())
+                        && tg.getPerson().getName().equals(toRemove.toString())){
+                        tg.changeTagging();
+                }
+            }
+        }
     }
 
     /**
@@ -120,6 +151,12 @@ public class AddressBook {
      */
     public void removeTag(Tag toRemove) throws TagNotFoundException {
         allTags.remove(toRemove);
+        for(Tagging tg : taggings){
+            if(tg.getTag().toString().equals(toRemove.toString())){
+                tg.changeTagging();
+                break;
+            }    
+        }
     }
 
     /**
@@ -143,4 +180,15 @@ public class AddressBook {
     public UniqueTagList getAllTags() {
         return new UniqueTagList(allTags);
     }
+    
+    private static ArrayList<Tagging> addExistingTags(UniquePersonList people) {
+        ArrayList<Tagging> existing_taggings = new ArrayList<Tagging>();
+        for(Person ppl : people){
+            UniqueTagList temTagList = ppl.getTags();
+            for(Tag t : temTagList){
+                existing_taggings.add(new Tagging(Action.ADD,ppl, t));
+            }
+        }
+        return existing_taggings;
+   }
 }
