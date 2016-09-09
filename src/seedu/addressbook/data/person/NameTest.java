@@ -29,4 +29,10 @@ public class NameTest {
     public void same_isSimilar_returnsTrue() {
         assertTrue(name.isSimilar(name));
     }
+    
+    @Test
+    public void isSimilar_sameNameDifferentCase_returnsTrue() throws IllegalValueException {
+        Name input = new Name("John Smith");
+        assertTrue(name.isSimilar(input));
+    }
 }
