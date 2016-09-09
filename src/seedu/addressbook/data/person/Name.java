@@ -62,7 +62,6 @@ public class Name {
     }
     
     public boolean isSimilar(Name other) {
-        return other.equals(this);
+        return this.fullName.toLowerCase().equals(other.fullName.toLowerCase());
     }
-
 }
